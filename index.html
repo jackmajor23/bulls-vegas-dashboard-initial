@@ -214,6 +214,18 @@
     .cf7-count { font-size: 40px; font-weight: 500; color: var(--gold); line-height: 1; font-family: var(--font-mono); }
     .cf7-caption { font-size: 11px; color: #9a8a6a; margin-top: 4px; }
 
+    .cf7-people-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .cf7-people-card {
+      background: rgba(255,255,255,0.07); border: 0.5px solid rgba(245,168,51,0.25);
+      border-radius: 8px; padding: 8px 14px; text-align: center; min-width: 70px;
+    }
+    .cf7-people-card.cf7-people-total {
+      border-color: rgba(245,168,51,0.55); background: rgba(245,168,51,0.12);
+    }
+    .cf7-people-val { font-size: 20px; font-weight: 500; color: var(--gold); font-family: var(--font-mono); line-height: 1; }
+    .cf7-people-lbl { font-size: 11px; color: #9a8a6a; margin-top: 3px; }
+    .cf7-people-sep { font-size: 16px; font-weight: 500; color: #9a8a6a; flex-shrink: 0; }
+
     /* ─── SOCIAL GRID ─── */
     .social-grid {
       display: grid;
@@ -339,7 +351,8 @@
   </div>
 
   <!-- ── TRAFFIC ── -->
-  <div class="section-label"><i class="ti ti-chart-bar"></i> overall campaign traffic</div>
+  <!-- TODO: if you set CONFIG.ga4Url above, this label becomes a link to your GA4 report -->
+  <div class="section-label" id="ga4-section-label"><i class="ti ti-chart-bar"></i> overall campaign traffic</div>
   <div class="metric-row">
     <div class="metric-card accent">
       <div class="metric-label">Total page views</div>
@@ -364,6 +377,7 @@
   </div>
 
   <!-- ── PAGE BREAKDOWN ── -->
+  <!-- TODO: page names link to CONFIG.siteUrl + the URL path — update CONFIG.siteUrl if your domain differs -->
   <div class="section-label"><i class="ti ti-browser"></i> page breakdown</div>
   <table class="pages-table">
     <thead>
@@ -381,26 +395,45 @@
   </table>
 
   <!-- ── CF7 ── -->
+  <!-- TODO: the label below links to CONFIG.formPageUrl — update that value in the CONFIG block -->
   <div class="cf7-card">
     <div class="cf7-left">
-      <div class="cf7-label">Contact Form 7 — /las-vegas-2027/</div>
+      <div class="cf7-label" id="cf7-form-label">Contact Form 7 — /las-vegas-2027/ · CF7 Advanced DB</div>
       <div class="cf7-title">Interest &amp; enquiry registrations</div>
       <div class="cf7-bar-bg"><div class="cf7-bar-fill" id="cf7-bar" style="width:0%"></div></div>
       <div class="cf7-sub" id="cf7-sub">Loading…</div>
+      <div class="cf7-people-row">
+        <div class="cf7-people-card">
+          <div class="cf7-people-val" id="cf7-adults">—</div>
+          <div class="cf7-people-lbl">adults</div>
+        </div>
+        <div class="cf7-people-sep">+</div>
+        <div class="cf7-people-card">
+          <div class="cf7-people-val" id="cf7-children">—</div>
+          <div class="cf7-people-lbl">children</div>
+        </div>
+        <div class="cf7-people-sep">=</div>
+        <div class="cf7-people-card cf7-people-total">
+          <div class="cf7-people-val" id="cf7-total-people">—</div>
+          <div class="cf7-people-lbl">total people</div>
+        </div>
+      </div>
     </div>
     <div class="cf7-right">
       <div class="cf7-count" id="cf7-count">—</div>
-      <div class="cf7-caption">total responses</div>
+      <div class="cf7-caption">submissions</div>
     </div>
   </div>
 
   <!-- ── SOCIAL ── -->
+  <!-- TODO: social card links come from CONFIG.socialLinks — set each platform URL or null to disable -->
   <div class="section-label"><i class="ti ti-share"></i> social media — vegas-specific posts</div>
   <div class="social-grid" id="social-grid">
     <!-- populated by JS -->
   </div>
 
   <!-- ── YOUTUBE ── -->
+  <!-- TODO: channel link comes from CONFIG.youtubeChannel and CONFIG.youtubeChannelLabel -->
   <div class="section-label"><i class="ti ti-brand-youtube"></i> youtube</div>
   <div class="yt-card">
     <div class="yt-thumb"><div class="yt-thumb-bg"></div></div>
@@ -424,7 +457,63 @@
 </div>
 
 <script>
-  // ─── SOCIAL CARD CONFIG ───────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★  LINKS & CONFIG — UPDATE THESE BEFORE GOING LIVE  ★
+  //
+  //  Everything you need to change is collected here.
+  //  Search for the matching TODO comment in the HTML above if you need
+  //  to find where a link sits in the page structure.
+  // ════════════════════════════════════════════════════════════════════════════
+
+  const CONFIG = {
+
+    // ── Your website base URL ─────────────────────────────────────────────────
+    // Used to build clickable links on the page breakdown table.
+    // TODO: replace with your actual domain (no trailing slash)
+    siteUrl: 'https://bradfordbulls.co.uk',
+
+    // ── Campaign page URLs ────────────────────────────────────────────────────
+    // These are the three Vegas pages tracked in GA4.
+    // TODO: update paths if your URLs are different
+    pages: {
+      hub:    '/las-vegas-2027/',
+      ceo:    '/news/ceo-jason-hirst-issues-statement/',
+      news:   '/news/were-heading-to-vegas/',
+    },
+
+    // ── YouTube channel link ───────────────────────────────────────────────────
+    // Shown in the YouTube section under the video stats.
+    // TODO: replace with your YouTube channel handle or URL
+    youtubeChannel: 'https://www.youtube.com/@BradfordBullsRFL',
+    youtubeChannelLabel: '@BradfordBullsRFL',
+
+    // ── Social media profile URLs ─────────────────────────────────────────────
+    // These make each social card a clickable link to your profile/page.
+    // TODO: replace each URL with your actual account link
+    // Set to null to disable the link on that card.
+    socialLinks: {
+      instagram: 'https://www.instagram.com/bradfordbullsrfl/',
+      facebook:  'https://www.facebook.com/BradfordBullsRFL/',
+      x:         'https://x.com/BradfordBullsRL',
+      tiktok:    'https://www.tiktok.com/@bradfordbullsrfl',
+      linkedin:  null,   // ← set to your LinkedIn page URL, or leave null to disable
+    },
+
+    // ── GA4 direct link (optional) ────────────────────────────────────────────
+    // If set, the "overall campaign traffic" header will link to your GA4 report.
+    // TODO: paste your GA4 property URL here, or set to null to disable
+    ga4Url: null,
+    // Example: 'https://analytics.google.com/analytics/web/#/p123456789/reports/...'
+
+    // ── WordPress form page link ──────────────────────────────────────────────
+    // The CF7 card label links to the Las Vegas Hub page.
+    // TODO: update if your hub page URL is different
+    formPageUrl: 'https://bradfordbulls.co.uk/las-vegas-2027/',
+
+  };
+  // ════════════════════════════════════════════════════════════════════════════
+  // ↓  RENDER ENGINE — no need to edit below this line  ↓
+  // ════════════════════════════════════════════════════════════════════════════
   const SOCIAL_CONFIG = [
     { key: 'instagram', label: 'Instagram',  cls: 'soc-ig', icon: 'ti-brand-instagram', reachLabel: 'reach / impressions', e1: 'Likes',     e2: 'Comments' },
     { key: 'facebook',  label: 'Facebook',   cls: 'soc-fb', icon: 'ti-brand-facebook',  reachLabel: 'reach / impressions', e1: 'Reactions',  e2: 'Shares'   },
@@ -470,35 +559,56 @@
       $('pages-tbody').innerHTML = '<tr><td colspan="5" style="color:var(--color-text-tertiary);text-align:center;padding:20px;font-size:13px;">No page data available.</td></tr>';
       return;
     }
-    $('pages-tbody').innerHTML = pages.map(p => `
+    $('pages-tbody').innerHTML = pages.map(p => {
+      const fullUrl = CONFIG.siteUrl + (p.url || '');
+      return `
       <tr>
         <td>
-          <span class="page-name">${esc(p.name)}</span>
-          <span class="page-url">${esc(p.url)}</span>
+          <a href="${fullUrl}" target="_blank" rel="noopener" style="text-decoration:none;">
+            <span class="page-name">${esc(p.name)}</span>
+            <span class="page-url">${esc(p.url)}</span>
+          </a>
         </td>
         <td>${fmtNum(p.views)}</td>
         <td>${esc(p.avg_time ?? '—')}</td>
         <td>${esc(p.bounce  ?? '—')}</td>
         <td><div class="bar-bg"><div class="bar-fill" style="width:${p.share ?? 0}%"></div></div></td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
 
   function renderCF7(cf7, hubViews) {
-    const total = cf7.total ?? 0;
-    set('cf7-count', total.toLocaleString('en-GB'));
+    const submissions = cf7.submissions ?? cf7.total ?? 0;
+    set('cf7-count', submissions.toLocaleString('en-GB'));
+
     const rate = cf7.conversion_rate;
     const rateStr = rate && rate !== '—' ? `${rate}%` : '—';
     set('cf7-sub', `${rateStr} of Las Vegas Hub visitors have submitted the form`);
+
     const barPct = Math.min(parseFloat(rate) || 0, 100);
     $('cf7-bar').style.width = barPct + '%';
+
+    // Adults / children / total people
+    const adults   = cf7.adults       ?? null;
+    const children = cf7.children     ?? null;
+    const total    = cf7.total_people  ?? (adults != null && children != null ? adults + children : null);
+    set('cf7-adults',       adults   != null ? adults.toLocaleString('en-GB')   : '—');
+    set('cf7-children',     children != null ? children.toLocaleString('en-GB') : '—');
+    set('cf7-total-people', total    != null ? total.toLocaleString('en-GB')    : '—');
   }
 
   function renderSocial(social) {
     const grid = $('social-grid');
     grid.innerHTML = SOCIAL_CONFIG.map(cfg => {
-      const d = social[cfg.key] || {};
+      const d    = social[cfg.key] || {};
+      const link = CONFIG.socialLinks[cfg.key];
+      const wrap = link
+        ? `<a href="${link}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:block;">`
+        : `<div>`;
+      const wrapEnd = link ? `</a>` : `</div>`;
       return `
       <div class="social-card">
+        ${wrap}
         <div class="social-top">
           <div class="social-icon ${cfg.cls}"><i class="ti ${cfg.icon}"></i></div>
           <div class="social-name">${cfg.label}</div>
@@ -510,6 +620,7 @@
           <span>${cfg.e2} <span class="eng-val">${esc(d.eng2 ?? '—')}</span></span>
         </div>
         ${d.manual ? '<div class="social-manual-note">✎ manually updated</div>' : ''}
+        ${wrapEnd}
       </div>`;
     }).join('');
   }
@@ -522,7 +633,7 @@
     set('yt-comments',  yt.comments  ?? '—');
     set('yt-watchtime', yt.watch_time ?? '—');
     const metaEl = $('yt-meta');
-    if (metaEl) metaEl.innerHTML = `Published ${esc(yt.published ?? '')} · <a href="https://www.youtube.com/@BradfordBullsRFL" style="color:var(--color-text-info);text-decoration:none;">@BradfordBullsRFL</a>`;
+    if (metaEl) metaEl.innerHTML = `Published ${esc(yt.published ?? '')} · <a href="${CONFIG.youtubeChannel}" target="_blank" rel="noopener" style="color:var(--color-text-info);text-decoration:none;">${CONFIG.youtubeChannelLabel}</a>`;
   }
 
   function esc(s) {
@@ -544,11 +655,33 @@
     try {
       const res = await fetch('data.json?t=' + Date.now());
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const raw = await res.json();
+
+      // Apply manual_override when enabled — interim data until automation is live
+      const mo = raw.manual_override;
+      const data = (mo && mo.enabled) ? {
+        period:  mo.period  || raw.period,
+        updated: mo.updated || raw.updated,
+        traffic: (mo.traffic  && Object.values(mo.traffic).some(v => v != null))  ? { ...raw.traffic,  ...Object.fromEntries(Object.entries(mo.traffic).filter(([,v]) => v != null)) }  : raw.traffic,
+        pages:   (mo.pages   && mo.pages.some(p => p.views != null))   ? mo.pages   : raw.pages,
+        cf7:     (mo.cf7     && Object.values(mo.cf7).some(v => v != null))     ? { ...raw.cf7,     ...Object.fromEntries(Object.entries(mo.cf7).filter(([,v]) => v != null)) }     : raw.cf7,
+        youtube: (mo.youtube  && Object.values(mo.youtube).some(v => v != null))  ? { ...raw.youtube, ...Object.fromEntries(Object.entries(mo.youtube).filter(([,v]) => v != null)) } : raw.youtube,
+        social:  mo.social   || raw.social,
+      } : raw;
 
       // Header
       set('db-period',  'Period: ' + (data.period ?? '—'));
-      set('db-updated', data.updated ? fmtUpdated(data.updated) : '');
+      set('db-updated', data.updated ? fmtUpdated(data.updated) : (mo && mo.enabled ? 'Manual data — ' + (mo.updated ?? '') : ''));
+
+      // Apply CONFIG links to static elements
+      const ga4Header = $('ga4-section-label');
+      if (ga4Header && CONFIG.ga4Url) {
+        ga4Header.innerHTML = `<a href="${CONFIG.ga4Url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;" title="Open in GA4">${ga4Header.innerHTML} <i class="ti ti-external-link" style="font-size:11px;opacity:0.5;"></i></a>`;
+      }
+      const cf7Label = $('cf7-form-label');
+      if (cf7Label && CONFIG.formPageUrl) {
+        cf7Label.innerHTML = `<a href="${CONFIG.formPageUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${cf7Label.innerHTML}</a>`;
+      }
 
       // Sections
       if (data.traffic) renderTraffic(data.traffic);

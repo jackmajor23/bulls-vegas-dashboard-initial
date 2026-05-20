@@ -4,7 +4,7 @@ Bradford Bulls – Vegas 2027 Dashboard Data Fetcher
 ===================================================
 Fetches from:
   • Google Analytics 4 (GA4 Data API)
-  • WordPress REST API  (CF7 via Flamingo plugin)
+  • WordPress REST API  (CF7 via CF7 Advanced DB plugin — default)
   • YouTube Data API v3
 
 Run manually:   python scripts/fetch_data.py
@@ -23,6 +23,12 @@ Optional (social media — leave blank to show '—' on the dashboard):
   META_ACCESS_TOKEN             Facebook/Instagram Graph API long-lived page token
   META_PAGE_ID                  Facebook Page ID
   META_IG_USER_ID               Instagram Business Account ID
+
+CF7 data source:
+  Default: CF7 Advanced DB plugin (stores submissions in wp_cf7_submissions / wp_cf7_submission_data).
+  The custom REST endpoint (added via functions.php) queries the Advanced DB tables directly,
+  summing the 'adults' and 'children' fields from each submission row.
+  Fallback: if Advanced DB tables are absent the endpoint falls back to counting Flamingo rows.
 """
 
 import json
@@ -206,20 +212,30 @@ def fetch_ga4():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# WORDPRESS / CF7  (via Flamingo plugin endpoint)
+# WORDPRESS / CF7  (via CF7 Advanced DB plugin — default)
 # ─────────────────────────────────────────────────────────────────────────────
 def fetch_cf7(hub_views: int = 0):
     """
     Calls the custom REST endpoint added by the WordPress snippet in README.md.
-    Endpoint: GET /wp-json/bulls/v1/cf7-count
+    Endpoint: GET /wp-json/bulls/v1/cf7-stats
+    Returns: submissions count, total adults, total children, total people.
     Authentication: WordPress Application Password (Basic Auth).
+
+    The endpoint queries CF7 Advanced DB tables (wp_cf7_submissions +
+    wp_cf7_submission_data) by default, with a Flamingo fallback.
     """
     if not WP_BASE_URL or not WP_USERNAME or not WP_APP_PASSWORD:
         print("⚠  WordPress env vars not set – skipping CF7.")
-        return {"total": 0, "conversion_rate": "—"}
+        return {
+            "submissions": 0,
+            "adults":      0,
+            "children":    0,
+            "total_people": 0,
+            "conversion_rate": "—",
+        }
 
-    print("→ Fetching CF7 data…")
-    url = f"{WP_BASE_URL}/wp-json/bulls/v1/cf7-count"
+    print("→ Fetching CF7 data (CF7 Advanced DB)…")
+    url = f"{WP_BASE_URL}/wp-json/bulls/v1/cf7-stats"
     try:
         resp = requests.get(
             url,
@@ -227,14 +243,29 @@ def fetch_cf7(hub_views: int = 0):
             timeout=15,
         )
         resp.raise_for_status()
-        data = resp.json()
-        total = int(data.get("count", 0))
+        data       = resp.json()
+        submissions = int(data.get("submissions", 0))
+        adults      = int(data.get("adults",      0))
+        children    = int(data.get("children",    0))
+        total_people = adults + children
     except Exception as e:
         print(f"  ✗ CF7 error: {e}")
-        return {"total": 0, "conversion_rate": "—"}
+        return {
+            "submissions": 0,
+            "adults":      0,
+            "children":    0,
+            "total_people": 0,
+            "conversion_rate": "—",
+        }
 
-    rate = f"{total / hub_views * 100:.1f}" if hub_views > 0 else "—"
-    return {"total": total, "conversion_rate": rate}
+    rate = f"{submissions / hub_views * 100:.1f}" if hub_views > 0 else "—"
+    return {
+        "submissions":   submissions,
+        "adults":        adults,
+        "children":      children,
+        "total_people":  total_people,
+        "conversion_rate": rate,
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
