@@ -1,13 +1,13 @@
 {
-  "period": "20 Apr – 20 May 2026",
-  "updated": "2026-05-20T22:36:47.013844Z",
+  "period": "Current",
+  "updated": "2026-05-20",
   "traffic": {},
   "pages": [],
   "cf7": {
-    "submissions": 0,
-    "adults": 0,
-    "children": 0,
-    "total_people": 0,
+    "submissions": 700,
+    "adults": 1700,
+    "children": 140,
+    "total_people": 1840,
     "conversion_rate": "—"
   },
   "youtube": {},
