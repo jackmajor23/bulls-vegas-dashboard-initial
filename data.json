@@ -44,8 +44,8 @@
     "_note": "Set 'enabled' to true to show these figures. Any field left as null falls back to the auto value. You do not need to fill everything in.",
     "enabled": false,
 
-    "period":  "1 Jan – 20 May 2025",
-    "updated": "20 May 2025",
+    "period":  "Current",
+    "updated": "20 May 2026",
 
     "traffic": {
       "pageviews": null,
@@ -81,10 +81,10 @@
     ],
 
     "cf7": {
-      "submissions":  null,
-      "adults":       null,
-      "children":     null,
-      "total_people": null
+      "submissions":  700,
+      "adults":       1700,
+      "children":     140,
+      "total_people": 1840
     },
 
     "youtube": {
