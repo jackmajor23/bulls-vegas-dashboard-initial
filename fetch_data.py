@@ -72,7 +72,7 @@ PREV_END  = (NOW - timedelta(days=31)).strftime("%Y-%m-%d")
 PREV_START = (NOW - timedelta(days=61)).strftime("%Y-%m-%d")
 
 # Pages to track (partial URL match)
-VEGAS_PATH_FILTER = "las-vegas"
+VEGAS_PATH_FILTER = "las-vegas-2027"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPERS
