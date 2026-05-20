@@ -1,0 +1,9 @@
+{
+  "_note": "Update these figures manually after each campaign post. Fields: reach (string), eng1 (first engagement metric), eng2 (second). Set manual:true to show 'manually updated' label on dashboard.",
+
+  "instagram": { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+  "facebook":  { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+  "x":         { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+  "tiktok":    { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+  "linkedin":  { "reach": "—", "eng1": "—", "eng2": "—", "manual": true }
+}

@@ -1,0 +1,31 @@
+{
+  "period": "—",
+  "updated": null,
+  "traffic": {
+    "pageviews": "—",
+    "sessions":  "—",
+    "users":     "—",
+    "avg_time":  "—",
+    "delta": {}
+  },
+  "pages": [],
+  "cf7": {
+    "total": 0,
+    "conversion_rate": "—"
+  },
+  "youtube": {
+    "title":      "Bradford Bulls are going to Las Vegas!",
+    "published":  "—",
+    "views":      "—",
+    "likes":      "—",
+    "comments":   "—",
+    "watch_time": "—"
+  },
+  "social": {
+    "instagram": { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+    "facebook":  { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+    "x":         { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+    "tiktok":    { "reach": "—", "eng1": "—", "eng2": "—", "manual": true },
+    "linkedin":  { "reach": "—", "eng1": "—", "eng2": "—", "manual": true }
+  }
+}

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bradford Bulls — Vegas 2027 Campaign Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    :root {
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f4f4f4;
+      --color-text-primary: #111;
+      --color-text-secondary: #555;
+      --color-text-tertiary: #888;
+      --color-text-info: #1a6fc4;
+      --color-border-tertiary: #e0e0e0;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+      --font-sans: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --gold: #F5A833;
+      --gold-dark: #d48a1a;
+      --dark-bg: #141414;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-background-primary: #1c1c1e;
+        --color-background-secondary: #2a2a2e;
+        --color-text-primary: #f0f0f0;
+        --color-text-secondary: #aaa;
+        --color-text-tertiary: #666;
+        --color-text-info: #60a5fa;
+        --color-border-tertiary: #333;
+        --dark-bg: #111;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+    }
+
+    .page-shell {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    /* ─── HEADER ─── */
+    .db-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1rem;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .db-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pill {
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--dark-bg);
+      color: var(--gold);
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .db-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .db-date { font-size: 12px; color: var(--color-text-tertiary); }
+    .db-updated { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-mono); }
+
+    /* ─── LOADING / ERROR STATES ─── */
+    .state-banner {
+      display: none;
+      font-size: 13px;
+      padding: 10px 14px;
+      border-radius: var(--border-radius-md);
+      margin-bottom: 1.5rem;
+      align-items: center;
+      gap: 8px;
+    }
+    .state-banner.loading {
+      background: var(--color-background-secondary);
+      color: var(--color-text-secondary);
+    }
+    .state-banner.error {
+      background: #fff0f0;
+      color: #a32d2d;
+      border: 0.5px solid #f5c6c6;
+    }
+    @media (prefers-color-scheme: dark) {
+      .state-banner.error { background: #2d1414; border-color: #6b2929; color: #f48080; }
+    }
+    .state-banner.visible { display: flex; }
+
+    /* ─── SECTION LABELS ─── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-label i { font-size: 14px; }
+
+    /* ─── METRIC CARDS ─── */
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.75rem;
+    }
+    .metric-card {
+      background: var(--color-background-secondary);
+      border-radius: var(--border-radius-md);
+      padding: 14px 16px;
+    }
+    .metric-card.accent { background: var(--dark-bg); }
+    .metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+    .metric-card.accent .metric-label { color: #9a8a6a; }
+    .metric-value {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+    }
+    .metric-card.accent .metric-value { color: var(--gold); }
+    .metric-delta { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+    .metric-delta.up { color: #3B6D11; }
+    .metric-delta.down { color: #A32D2D; }
+
+    /* ─── PAGES TABLE ─── */
+    .pages-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 1.75rem;
+    }
+    .pages-table th {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+      text-align: left;
+      padding: 0 10px 8px;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+    }
+    .pages-table th:not(:first-child) { text-align: right; }
+    .pages-table td {
+      padding: 10px;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+      color: var(--color-text-primary);
+      vertical-align: middle;
+    }
+    .pages-table td:not(:first-child) { text-align: right; color: var(--color-text-secondary); }
+    .pages-table tr:last-child td { border-bottom: none; }
+    .page-name { font-weight: 500; color: var(--color-text-primary); display: block; margin-bottom: 2px; }
+    .page-url { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-mono); }
+    .bar-bg {
+      background: var(--color-background-secondary);
+      border-radius: 3px;
+      height: 4px;
+      width: 80px;
+      display: inline-block;
+      vertical-align: middle;
+      overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 3px; background: var(--gold); }
+
+    /* ─── CF7 CARD ─── */
+    .cf7-card {
+      background: var(--dark-bg);
+      border-radius: var(--border-radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .cf7-left { flex: 1; min-width: 160px; }
+    .cf7-label { font-size: 12px; color: #9a8a6a; margin-bottom: 4px; }
+    .cf7-title { font-size: 14px; font-weight: 500; color: var(--gold); margin-bottom: 10px; }
+    .cf7-bar-bg { background: #333; border-radius: 4px; height: 6px; width: 100%; overflow: hidden; }
+    .cf7-bar-fill { height: 100%; border-radius: 4px; background: var(--gold); transition: width 0.6s ease; }
+    .cf7-sub { font-size: 11px; color: #9a8a6a; margin-top: 6px; }
+    .cf7-right { text-align: right; }
+    .cf7-count { font-size: 40px; font-weight: 500; color: var(--gold); line-height: 1; font-family: var(--font-mono); }
+    .cf7-caption { font-size: 11px; color: #9a8a6a; margin-top: 4px; }
+
+    /* ─── SOCIAL GRID ─── */
+    .social-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.75rem;
+    }
+    .social-card {
+      background: var(--color-background-primary);
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-lg);
+      padding: 14px 14px 12px;
+    }
+    .social-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .social-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .soc-ig { background: #fce4ec; color: #c2185b; }
+    .soc-fb { background: #e3f2fd; color: #1565c0; }
+    .soc-x  { background: #f5f5f5; color: #212121; }
+    .soc-tk { background: #f3e5f5; color: #6a1b9a; }
+    .soc-li { background: #e1f5fe; color: #0277bd; }
+    @media (prefers-color-scheme: dark) {
+      .soc-ig { background: #4a0020; color: #f48fb1; }
+      .soc-fb { background: #0d2137; color: #90caf9; }
+      .soc-x  { background: #1a1a1a; color: #e0e0e0; }
+      .soc-tk { background: #1e0033; color: #ce93d8; }
+      .soc-li { background: #002233; color: #81d4fa; }
+    }
+    .social-name { font-size: 11px; color: var(--color-text-tertiary); font-weight: 500; }
+    .social-reach { font-size: 20px; font-weight: 500; color: var(--color-text-primary); font-family: var(--font-mono); }
+    .social-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+    .social-eng {
+      font-size: 12px; color: var(--color-text-secondary);
+      margin-top: 8px; padding-top: 8px;
+      border-top: 0.5px solid var(--color-border-tertiary);
+      display: flex; justify-content: space-between;
+    }
+    .eng-val { font-weight: 500; color: var(--color-text-primary); font-family: var(--font-mono); }
+    .social-manual-note {
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    /* ─── YOUTUBE CARD ─── */
+    .yt-card {
+      background: var(--color-background-primary);
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-lg);
+      padding: 16px;
+      margin-bottom: 1.75rem;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .yt-thumb {
+      width: 100px; height: 58px; background: #222;
+      border-radius: 6px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .yt-thumb::after {
+      content: '';
+      position: absolute;
+      width: 0; height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-left: 18px solid var(--gold);
+      z-index: 2;
+    }
+    .yt-thumb-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #1a1a1a 0%, #2d1a00 100%); }
+    .yt-info { flex: 1; min-width: 0; }
+    .yt-title {
+      font-size: 13px; font-weight: 500; color: var(--color-text-primary);
+      margin-bottom: 4px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .yt-meta { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 10px; }
+    .yt-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+    .yt-stat-val { font-size: 16px; font-weight: 500; color: var(--color-text-primary); font-family: var(--font-mono); }
+    .yt-stat-lbl { font-size: 11px; color: var(--color-text-tertiary); }
+
+    /* ─── NOTE BAR ─── */
+    .note-bar {
+      font-size: 11px; color: var(--color-text-tertiary);
+      padding: 10px 14px;
+      background: var(--color-background-secondary);
+      border-radius: var(--border-radius-md);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    @media (max-width: 520px) {
+      .db-header { flex-direction: column; align-items: flex-start; }
+      .db-meta { align-items: flex-start; }
+      .yt-card { flex-direction: column; }
+      .yt-thumb { width: 100%; height: 100px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-shell">
+
+  <div class="db-header">
+    <div class="db-title">
+      <span>🏉</span>
+      <span>Bradford Bulls — Vegas 2027 <span class="pill">Campaign Hub</span></span>
+    </div>
+    <div class="db-meta">
+      <div class="db-date" id="db-period">Loading…</div>
+      <div class="db-updated" id="db-updated"></div>
+    </div>
+  </div>
+
+  <div class="state-banner loading visible" id="state-loading">
+    <i class="ti ti-loader-2"></i> Fetching latest data…
+  </div>
+  <div class="state-banner error" id="state-error">
+    <i class="ti ti-alert-circle"></i>
+    <span id="error-msg">Could not load data.json — make sure the file exists in the repository root.</span>
+  </div>
+
+  <!-- ── TRAFFIC ── -->
+  <div class="section-label"><i class="ti ti-chart-bar"></i> overall campaign traffic</div>
+  <div class="metric-row">
+    <div class="metric-card accent">
+      <div class="metric-label">Total page views</div>
+      <div class="metric-value" id="m-pageviews">—</div>
+      <div class="metric-delta" id="m-pageviews-d"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total sessions</div>
+      <div class="metric-value" id="m-sessions">—</div>
+      <div class="metric-delta" id="m-sessions-d"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Unique users</div>
+      <div class="metric-value" id="m-users">—</div>
+      <div class="metric-delta" id="m-users-d"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Avg. session duration</div>
+      <div class="metric-value" id="m-avgtime">—</div>
+      <div class="metric-delta" id="m-avgtime-d"></div>
+    </div>
+  </div>
+
+  <!-- ── PAGE BREAKDOWN ── -->
+  <div class="section-label"><i class="ti ti-browser"></i> page breakdown</div>
+  <table class="pages-table">
+    <thead>
+      <tr>
+        <th>Page</th>
+        <th>Views</th>
+        <th>Avg. time</th>
+        <th>Bounce %</th>
+        <th style="text-align:right">Share</th>
+      </tr>
+    </thead>
+    <tbody id="pages-tbody">
+      <tr><td colspan="5" style="color:var(--color-text-tertiary);text-align:center;padding:20px;font-size:13px;">Loading pages…</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── CF7 ── -->
+  <div class="cf7-card">
+    <div class="cf7-left">
+      <div class="cf7-label">Contact Form 7 — /las-vegas-2027/</div>
+      <div class="cf7-title">Interest &amp; enquiry registrations</div>
+      <div class="cf7-bar-bg"><div class="cf7-bar-fill" id="cf7-bar" style="width:0%"></div></div>
+      <div class="cf7-sub" id="cf7-sub">Loading…</div>
+    </div>
+    <div class="cf7-right">
+      <div class="cf7-count" id="cf7-count">—</div>
+      <div class="cf7-caption">total responses</div>
+    </div>
+  </div>
+
+  <!-- ── SOCIAL ── -->
+  <div class="section-label"><i class="ti ti-share"></i> social media — vegas-specific posts</div>
+  <div class="social-grid" id="social-grid">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- ── YOUTUBE ── -->
+  <div class="section-label"><i class="ti ti-brand-youtube"></i> youtube</div>
+  <div class="yt-card">
+    <div class="yt-thumb"><div class="yt-thumb-bg"></div></div>
+    <div class="yt-info">
+      <div class="yt-title" id="yt-title">Loading…</div>
+      <div class="yt-meta" id="yt-meta"></div>
+      <div class="yt-stats">
+        <div class="yt-stat"><div class="yt-stat-val" id="yt-views">—</div><div class="yt-stat-lbl">views</div></div>
+        <div class="yt-stat"><div class="yt-stat-val" id="yt-likes">—</div><div class="yt-stat-lbl">likes</div></div>
+        <div class="yt-stat"><div class="yt-stat-val" id="yt-comments">—</div><div class="yt-stat-lbl">comments</div></div>
+        <div class="yt-stat"><div class="yt-stat-val" id="yt-watchtime">—</div><div class="yt-stat-lbl">watch time</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note-bar">
+    <i class="ti ti-info-circle"></i>
+    GA4, CF7 &amp; YouTube data refreshes automatically every 12 hours via GitHub Actions. Social figures updated manually in <code style="font-family:var(--font-mono)">social.json</code>.
+  </div>
+
+</div>
+
+<script>
+  // ─── SOCIAL CARD CONFIG ───────────────────────────────────────────────────
+  const SOCIAL_CONFIG = [
+    { key: 'instagram', label: 'Instagram',  cls: 'soc-ig', icon: 'ti-brand-instagram', reachLabel: 'reach / impressions', e1: 'Likes',     e2: 'Comments' },
+    { key: 'facebook',  label: 'Facebook',   cls: 'soc-fb', icon: 'ti-brand-facebook',  reachLabel: 'reach / impressions', e1: 'Reactions',  e2: 'Shares'   },
+    { key: 'x',         label: 'X / Twitter',cls: 'soc-x',  icon: 'ti-brand-x',         reachLabel: 'impressions',         e1: 'Likes',      e2: 'Reposts'  },
+    { key: 'tiktok',    label: 'TikTok',     cls: 'soc-tk', icon: 'ti-brand-tiktok',    reachLabel: 'video views',         e1: 'Likes',      e2: 'Saves'    },
+    { key: 'linkedin',  label: 'LinkedIn',   cls: 'soc-li', icon: 'ti-brand-linkedin',  reachLabel: 'impressions',         e1: 'Reactions',  e2: 'Reposts'  },
+  ];
+
+  // ─── HELPERS ─────────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  function set(id, val) { const el = $(id); if (el) el.textContent = val; }
+
+  function fmtUpdated(iso) {
+    try {
+      const d = new Date(iso);
+      return 'Updated ' + d.toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    } catch { return ''; }
+  }
+
+  // ─── RENDER FUNCTIONS ────────────────────────────────────────────────────
+  function renderTraffic(t) {
+    set('m-pageviews', t.pageviews ?? '—');
+    set('m-sessions',  t.sessions  ?? '—');
+    set('m-users',     t.users     ?? '—');
+    set('m-avgtime',   t.avg_time  ?? '—');
+
+    function delta(el, val) {
+      if (!val) return;
+      const up = val.startsWith('+') || val.startsWith('↑');
+      el.textContent = val;
+      el.className = 'metric-delta ' + (up ? 'up' : 'down');
+    }
+    if (t.delta) {
+      delta($('m-pageviews-d'), t.delta.pageviews);
+      delta($('m-sessions-d'),  t.delta.sessions);
+      delta($('m-users-d'),     t.delta.users);
+      delta($('m-avgtime-d'),   t.delta.avg_time);
+    }
+  }
+
+  function renderPages(pages) {
+    if (!pages || !pages.length) {
+      $('pages-tbody').innerHTML = '<tr><td colspan="5" style="color:var(--color-text-tertiary);text-align:center;padding:20px;font-size:13px;">No page data available.</td></tr>';
+      return;
+    }
+    $('pages-tbody').innerHTML = pages.map(p => `
+      <tr>
+        <td>
+          <span class="page-name">${esc(p.name)}</span>
+          <span class="page-url">${esc(p.url)}</span>
+        </td>
+        <td>${fmtNum(p.views)}</td>
+        <td>${esc(p.avg_time ?? '—')}</td>
+        <td>${esc(p.bounce  ?? '—')}</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:${p.share ?? 0}%"></div></div></td>
+      </tr>`).join('');
+  }
+
+  function renderCF7(cf7, hubViews) {
+    const total = cf7.total ?? 0;
+    set('cf7-count', total.toLocaleString('en-GB'));
+    const rate = cf7.conversion_rate;
+    const rateStr = rate && rate !== '—' ? `${rate}%` : '—';
+    set('cf7-sub', `${rateStr} of Las Vegas Hub visitors have submitted the form`);
+    const barPct = Math.min(parseFloat(rate) || 0, 100);
+    $('cf7-bar').style.width = barPct + '%';
+  }
+
+  function renderSocial(social) {
+    const grid = $('social-grid');
+    grid.innerHTML = SOCIAL_CONFIG.map(cfg => {
+      const d = social[cfg.key] || {};
+      return `
+      <div class="social-card">
+        <div class="social-top">
+          <div class="social-icon ${cfg.cls}"><i class="ti ${cfg.icon}"></i></div>
+          <div class="social-name">${cfg.label}</div>
+        </div>
+        <div class="social-reach">${esc(d.reach ?? '—')}</div>
+        <div class="social-sub">${cfg.reachLabel}</div>
+        <div class="social-eng">
+          <span>${cfg.e1} <span class="eng-val">${esc(d.eng1 ?? '—')}</span></span>
+          <span>${cfg.e2} <span class="eng-val">${esc(d.eng2 ?? '—')}</span></span>
+        </div>
+        ${d.manual ? '<div class="social-manual-note">✎ manually updated</div>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function renderYoutube(yt) {
+    if (!yt || !yt.title) { set('yt-title', 'No YouTube data available'); return; }
+    set('yt-title',     yt.title     ?? '—');
+    set('yt-views',     yt.views     ?? '—');
+    set('yt-likes',     yt.likes     ?? '—');
+    set('yt-comments',  yt.comments  ?? '—');
+    set('yt-watchtime', yt.watch_time ?? '—');
+    const metaEl = $('yt-meta');
+    if (metaEl) metaEl.innerHTML = `Published ${esc(yt.published ?? '')} · <a href="https://www.youtube.com/@BradfordBullsRFL" style="color:var(--color-text-info);text-decoration:none;">@BradfordBullsRFL</a>`;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtNum(n) {
+    if (n == null) return '—';
+    if (typeof n === 'string') return n;
+    if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+    return n.toLocaleString('en-GB');
+  }
+
+  // ─── MAIN LOAD ───────────────────────────────────────────────────────────
+  async function loadData() {
+    const loadBanner  = $('state-loading');
+    const errorBanner = $('state-error');
+
+    try {
+      const res = await fetch('data.json?t=' + Date.now());
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Header
+      set('db-period',  'Period: ' + (data.period ?? '—'));
+      set('db-updated', data.updated ? fmtUpdated(data.updated) : '');
+
+      // Sections
+      if (data.traffic) renderTraffic(data.traffic);
+      if (data.pages)   renderPages(data.pages);
+      if (data.cf7)     renderCF7(data.cf7);
+      renderSocial(data.social || {});
+      if (data.youtube) renderYoutube(data.youtube);
+
+      loadBanner.classList.remove('visible');
+    } catch (err) {
+      loadBanner.classList.remove('visible');
+      errorBanner.classList.add('visible');
+      $('error-msg').textContent = 'Could not load data.json — ' + err.message;
+    }
+  }
+
+  loadData();
+</script>
+</body>
+</html>
