@@ -401,7 +401,6 @@ def fetch_social():
     if META_ACCESS_TOKEN and META_PAGE_ID:
         print("→ Fetching Facebook page insights…")
         try:
-            # Impressions & reach for last 30 days
             url = f"https://graph.facebook.com/v19.0/{META_PAGE_ID}/insights"
             params = {
                 "metric": "page_impressions,page_post_engagements",
@@ -447,16 +446,31 @@ def fetch_social():
     try:
         with open("social.json") as f:
             manual = json.load(f)
+
+        # social.json should be: {"instagram": {reach,eng1,eng2,manual}, ...}
+        # In case it contains unexpected values, don't blow up the whole script.
         for key, val in manual.items():
-            if key not in social:        # don't overwrite API data
-                val["manual"] = True
-                social[key] = val
+            if key in social:
+                continue
+            if isinstance(val, dict):
+                out = dict(val)
+                out["manual"] = True
+                social[key] = out
+            else:
+                # Ignore malformed entries
+                social[key] = {
+                    "reach": str(val),
+                    "eng1": "—",
+                    "eng2": "—",
+                    "manual": True,
+                }
     except FileNotFoundError:
         pass
     except Exception as e:
         print(f"  ✗ social.json error: {e}")
 
     return social
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────
