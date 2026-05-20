@@ -41,11 +41,11 @@
   },
 
   "manual_override": {
-    "_note": "Fill in these values to display interim data while automation is being set up. Set 'enabled' to true to activate. These values take priority over the auto-fetched fields above.",
+    "_note": "Set 'enabled' to true to show these figures. Any field left as null falls back to the auto value. You do not need to fill everything in.",
     "enabled": false,
 
-    "period":   "Current Period",
-    "updated":  "20 May 2026",
+    "period":  "1 Jan – 20 May 2025",
+    "updated": "20 May 2025",
 
     "traffic": {
       "pageviews": null,
@@ -54,8 +54,10 @@
       "avg_time":  null
     },
 
+    "_pages_note": "Add as many page entries as you like. Each entry needs name, url, and at least one of views/sessions/time. Leave unused fields as null.",
     "pages": [
       {
+        "_add_more": "Copy this block to add another page. Order here = order on dashboard.",
         "name":     "Las Vegas 2027 Hub",
         "url":      "/las-vegas-2027/",
         "views":    null,
@@ -79,10 +81,10 @@
     ],
 
     "cf7": {
-      "submissions":  700,
-      "adults":       1700,
-      "children":     100,
-      "total_people": 2000
+      "submissions":  null,
+      "adults":       null,
+      "children":     null,
+      "total_people": null
     },
 
     "youtube": {
@@ -95,11 +97,12 @@
     },
 
     "social": {
-      "instagram": { "posts": null, "reach": null, "likes": null, "comments": null },
-      "facebook":  { "posts": null, "reach": null, "reactions": null, "shares": null },
-      "x":         { "posts": null, "impressions": null, "likes": null, "reposts": null },
-      "tiktok":    { "videos": null, "views": null, "likes": null, "saves": null },
-      "linkedin":  { "posts": null, "impressions": null, "reactions": null, "reposts": null }
+      "_note": "Values here override social.json. Leave a platform out entirely to use social.json instead.",
+      "instagram": { "reach": null, "eng1": null, "eng2": null },
+      "facebook":  { "reach": null, "eng1": null, "eng2": null },
+      "x":         { "reach": null, "eng1": null, "eng2": null },
+      "tiktok":    { "reach": null, "eng1": null, "eng2": null },
+      "linkedin":  { "reach": null, "eng1": null, "eng2": null }
     }
   }
 }

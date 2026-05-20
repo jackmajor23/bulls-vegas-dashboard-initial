@@ -473,13 +473,15 @@
     siteUrl: 'https://bradfordbulls.co.uk',
 
     // ── Campaign page URLs ────────────────────────────────────────────────────
-    // These are the three Vegas pages tracked in GA4.
-    // TODO: update paths if your URLs are different
-    pages: {
-      hub:    '/las-vegas-2027/',
-      ceo:    '/news/ceo-jason-hirst-issues-statement/',
-      news:   '/news/were-heading-to-vegas/',
-    },
+    // The pages shown in the breakdown table are driven by PAGES_TO_TRACK
+    // in fetch_data.py (for automatic data) or the "pages" array inside
+    // manual_override in data.json (for manual data).
+    //
+    // To add a new page: edit PAGES_TO_TRACK in fetch_data.py — no changes
+    // needed here. The dashboard renders however many pages the data contains.
+    //
+    // TODO: only update siteUrl below — it's prepended to each page path
+    // to make the page name a clickable link to the live site.
 
     // ── YouTube channel link ───────────────────────────────────────────────────
     // Shown in the YouTube section under the video stats.
@@ -556,23 +558,25 @@
 
   function renderPages(pages) {
     if (!pages || !pages.length) {
-      $('pages-tbody').innerHTML = '<tr><td colspan="5" style="color:var(--color-text-tertiary);text-align:center;padding:20px;font-size:13px;">No page data available.</td></tr>';
+      $('pages-tbody').innerHTML = '<tr><td colspan="5" style="color:var(--color-text-tertiary);text-align:center;padding:20px;font-size:13px;">No page data yet — add pages to PAGES_TO_TRACK in fetch_data.py or the manual_override in data.json.</td></tr>';
       return;
     }
     $('pages-tbody').innerHTML = pages.map(p => {
       const fullUrl = CONFIG.siteUrl + (p.url || '');
+      const views   = p.views ?? '—';
+      const share   = p.share ?? 0;
       return `
       <tr>
         <td>
           <a href="${fullUrl}" target="_blank" rel="noopener" style="text-decoration:none;">
-            <span class="page-name">${esc(p.name)}</span>
-            <span class="page-url">${esc(p.url)}</span>
+            <span class="page-name">${esc(p.name || p.url)}</span>
+            <span class="page-url">${esc(p.url || '')}</span>
           </a>
         </td>
-        <td>${fmtNum(p.views)}</td>
-        <td>${esc(p.avg_time ?? '—')}</td>
+        <td>${typeof views === 'number' ? fmtNum(views) : esc(String(views))}</td>
+        <td>${esc(p.avg_time ?? p.time ?? '—')}</td>
         <td>${esc(p.bounce  ?? '—')}</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:${p.share ?? 0}%"></div></div></td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:${share}%"></div></div></td>
       </tr>`;
     }).join('');
   }
@@ -657,17 +661,43 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = await res.json();
 
-      // Apply manual_override when enabled — interim data until automation is live
+      // Apply manual_override when enabled — interim data until automation is live.
+      // Any field you fill in (non-null) will override the auto value.
+      // Fields you leave as null simply fall back to the auto-fetched value.
+      // You do NOT need to fill everything in — partial overrides are fine.
       const mo = raw.manual_override;
+      function mergeObj(base, override) {
+        if (!override) return base || {};
+        const out = { ...base };
+        for (const [k, v] of Object.entries(override)) {
+          if (v !== null && v !== undefined) out[k] = v;
+        }
+        return out;
+      }
       const data = (mo && mo.enabled) ? {
         period:  mo.period  || raw.period,
         updated: mo.updated || raw.updated,
-        traffic: (mo.traffic  && Object.values(mo.traffic).some(v => v != null))  ? { ...raw.traffic,  ...Object.fromEntries(Object.entries(mo.traffic).filter(([,v]) => v != null)) }  : raw.traffic,
-        pages:   (mo.pages   && mo.pages.some(p => p.views != null))   ? mo.pages   : raw.pages,
-        cf7:     (mo.cf7     && Object.values(mo.cf7).some(v => v != null))     ? { ...raw.cf7,     ...Object.fromEntries(Object.entries(mo.cf7).filter(([,v]) => v != null)) }     : raw.cf7,
-        youtube: (mo.youtube  && Object.values(mo.youtube).some(v => v != null))  ? { ...raw.youtube, ...Object.fromEntries(Object.entries(mo.youtube).filter(([,v]) => v != null)) } : raw.youtube,
-        social:  mo.social   || raw.social,
+        traffic: mergeObj(raw.traffic,  mo.traffic),
+        pages:   (mo.pages && mo.pages.length) ? mo.pages.map((p, i) => {
+          const base = (raw.pages || [])[i] || {};
+          const merged = mergeObj(base, p);
+          // Recalculate share bars after merge
+          return merged;
+        }).filter(p => !p._add_more) : raw.pages,
+        cf7:     mergeObj(raw.cf7,     mo.cf7),
+        youtube: mergeObj(raw.youtube,  mo.youtube),
+        social:  mo.social ? mergeObj(raw.social, mo.social) : raw.social,
       } : raw;
+
+      // Recalculate share bars for pages (important when using manual_override)
+      if (data.pages && data.pages.length) {
+        const maxV = Math.max(...data.pages.map(p => parseInt(p.views) || 0), 1);
+        data.pages.forEach(p => {
+          if (p.share == null || p.share === 0) {
+            p.share = Math.round((parseInt(p.views) || 0) / maxV * 100);
+          }
+        });
+      }
 
       // Header
       set('db-period',  'Period: ' + (data.period ?? '—'));

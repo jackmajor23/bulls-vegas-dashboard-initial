@@ -71,8 +71,54 @@ START_DATE = (NOW - timedelta(days=30)).strftime("%Y-%m-%d")
 PREV_END  = (NOW - timedelta(days=31)).strftime("%Y-%m-%d")
 PREV_START = (NOW - timedelta(days=61)).strftime("%Y-%m-%d")
 
-# Pages to track (partial URL match)
-VEGAS_PATH_FILTER = "las-vegas-2027"
+# ─────────────────────────────────────────────────────────────────────────────
+# ★  PAGES TO TRACK  ★
+# ─────────────────────────────────────────────────────────────────────────────
+# Add or remove pages here. Each entry needs:
+#   "name"  — display label shown on the dashboard
+#   "url"   — the exact page path on your site (used for the clickable link)
+#   "match" — a unique string that appears in the GA4 page path for this page
+#             (partial match — e.g. "las-vegas-2027" matches /las-vegas-2027/
+#              and any sub-pages like /las-vegas-2027/faq/)
+#
+# The GA4 filter is built automatically from all "match" values, so overall
+# traffic totals cover every page in this list.
+#
+# To add a page: copy a block, fill in name/url/match, save and push.
+# To remove a page: delete its block entirely.
+# ─────────────────────────────────────────────────────────────────────────────
+PAGES_TO_TRACK = [
+    {
+        "name":  "Las Vegas 2027 Hub",
+        "url":   "/las-vegas-2027/",
+        "match": "las-vegas-2027",        # must appear in the GA4 page path
+    },
+    {
+        "name":  "CEO Statement",
+        "url":   "/news/ceo-jason-hirst-issues-statement/",
+        "match": "ceo-jason-hirst",
+    },
+    {
+        "name":  "We're Heading to Vegas",
+        "url":   "/news/were-heading-to-vegas/",
+        "match": "were-heading-to-vegas",
+    },
+    # ── Add more pages below — copy a block above and fill in your values ──────
+    # {
+    #     "name":  "Vegas FAQ",
+    #     "url":   "/las-vegas-2027/faq/",
+    #     "match": "las-vegas-2027/faq",
+    # },
+    # {
+    #     "name":  "Vegas Ticket Packages",
+    #     "url":   "/las-vegas-2027/tickets/",
+    #     "match": "las-vegas-2027/tickets",
+    # },
+]
+
+# Which page hosts the CF7 interest form?
+# Set to the "match" value of that page — used to calculate the conversion rate.
+CF7_HUB_MATCH = "las-vegas-2027"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPERS
@@ -102,10 +148,10 @@ def pct_delta(current: int, prev: int) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 def fetch_ga4():
     if not GA4_AVAILABLE:
-        return {}, []
+        return {}, [], 0
     if not GA4_PROPERTY_ID or not GOOGLE_SERVICE_ACCOUNT_JSON:
         print("⚠  GA4 env vars not set – skipping.")
-        return {}, []
+        return {}, [], 0
 
     print("→ Fetching GA4 data…")
     creds_info = json.loads(GOOGLE_SERVICE_ACCOUNT_JSON)
@@ -115,15 +161,28 @@ def fetch_ga4():
     )
     client = BetaAnalyticsDataClient(credentials=credentials)
 
-    vegas_filter = FilterExpression(
-        filter=Filter(
-            field_name="pagePath",
-            string_filter=Filter.StringFilter(
-                match_type=Filter.StringFilter.MatchType.CONTAINS,
-                value=VEGAS_PATH_FILTER,
-            ),
+    # Build an OR filter across all page match strings from PAGES_TO_TRACK
+    from google.analytics.data_v1beta.types import FilterExpressionList
+
+    def make_path_filter(match_value):
+        return FilterExpression(
+            filter=Filter(
+                field_name="pagePath",
+                string_filter=Filter.StringFilter(
+                    match_type=Filter.StringFilter.MatchType.CONTAINS,
+                    value=match_value,
+                ),
+            )
         )
-    )
+
+    if len(PAGES_TO_TRACK) == 1:
+        combined_filter = make_path_filter(PAGES_TO_TRACK[0]["match"])
+    else:
+        combined_filter = FilterExpression(
+            or_group=FilterExpressionList(
+                expressions=[make_path_filter(p["match"]) for p in PAGES_TO_TRACK]
+            )
+        )
 
     def run(date_ranges, metrics, dimensions=None, dim_filter=None):
         req = RunReportRequest(
@@ -136,12 +195,12 @@ def fetch_ga4():
             req.dimensions = dimensions
         return client.run_report(req)
 
-    # ── Overall (current period)
+    # ── Overall totals (current period)
     r = run(
         [DateRange(start_date=START_DATE, end_date=END_DATE)],
         [Metric(name="screenPageViews"), Metric(name="sessions"),
          Metric(name="activeUsers"),     Metric(name="averageSessionDuration")],
-        dim_filter=vegas_filter,
+        dim_filter=combined_filter,
     )
     row = r.rows[0] if r.rows else None
     pv  = int(row.metric_values[0].value) if row else 0
@@ -149,11 +208,11 @@ def fetch_ga4():
     usr = int(row.metric_values[2].value) if row else 0
     dur = float(row.metric_values[3].value) if row else 0.0
 
-    # ── Overall (previous period for delta)
+    # ── Overall totals (previous period for delta)
     rp = run(
         [DateRange(start_date=PREV_START, end_date=PREV_END)],
         [Metric(name="screenPageViews"), Metric(name="sessions"), Metric(name="activeUsers")],
-        dim_filter=vegas_filter,
+        dim_filter=combined_filter,
     )
     rowp = rp.rows[0] if rp.rows else None
     pv_p  = int(rowp.metric_values[0].value) if rowp else 0
@@ -178,35 +237,62 @@ def fetch_ga4():
         [DateRange(start_date=START_DATE, end_date=END_DATE)],
         [Metric(name="screenPageViews"), Metric(name="averageSessionDuration"), Metric(name="bounceRate")],
         dimensions=[Dimension(name="pagePath"), Dimension(name="pageTitle")],
-        dim_filter=vegas_filter,
+        dim_filter=combined_filter,
     )
-    raw = []
+
+    # Collect all GA4 rows, summing views per path
+    raw_by_path: dict = {}
     for row in rp2.rows:
-        views = int(row.metric_values[0].value)
-        raw.append({
-            "url":      row.dimension_values[0].value,
-            "name":     row.dimension_values[1].value,
-            "views":    views,
-            "avg_dur":  float(row.metric_values[1].value),
-            "bounce":   float(row.metric_values[2].value),
-        })
-    raw.sort(key=lambda x: x["views"], reverse=True)
-    max_views = raw[0]["views"] if raw else 1
+        path   = row.dimension_values[0].value
+        title  = row.dimension_values[1].value
+        views  = int(row.metric_values[0].value)
+        avg_dur = float(row.metric_values[1].value)
+        bounce  = float(row.metric_values[2].value)
+        if path in raw_by_path:
+            raw_by_path[path]["views"] += views
+        else:
+            raw_by_path[path] = {"url": path, "name": title, "views": views,
+                                  "avg_dur": avg_dur, "bounce": bounce}
 
-    pages = [
-        {
-            "name":     p["name"],
-            "url":      p["url"],
-            "views":    fmt(p["views"]),
-            "avg_time": secs_to_mmss(p["avg_dur"]),
-            "bounce":   f"{p['bounce']*100:.0f}%",
-            "share":    round(p["views"] / max_views * 100),
-        }
-        for p in raw[:6]
-    ]
+    # Match GA4 rows back to PAGES_TO_TRACK in the order they are defined,
+    # preserving the configured display name and URL even if GA4's page title differs.
+    pages = []
+    hub_raw = 0
+    for page_cfg in PAGES_TO_TRACK:
+        matched = next(
+            (r for r in raw_by_path.values() if page_cfg["match"] in r["url"]),
+            None
+        )
+        if matched:
+            views_int = matched["views"]
+            pages.append({
+                "name":     page_cfg["name"],
+                "url":      page_cfg["url"],
+                "views":    fmt(views_int),
+                "avg_time": secs_to_mmss(matched["avg_dur"]),
+                "bounce":   f"{matched['bounce']*100:.0f}%",
+                "share":    0,   # filled in below once we know the max
+                "_views_raw": views_int,
+            })
+            if page_cfg["match"] == CF7_HUB_MATCH:
+                hub_raw = views_int
+        else:
+            # Page exists in config but had no GA4 traffic this period
+            pages.append({
+                "name":     page_cfg["name"],
+                "url":      page_cfg["url"],
+                "views":    "0",
+                "avg_time": "—",
+                "bounce":   "—",
+                "share":    0,
+                "_views_raw": 0,
+            })
 
-    # Raw hub views for CF7 conversion rate (used later)
-    hub_raw = next((p["views"] for p in raw if "/las-vegas-2027" in p["url"]), 0)
+    # Calculate share bars relative to the top page
+    max_views = max((p["_views_raw"] for p in pages), default=1) or 1
+    for p in pages:
+        p["share"] = round(p["_views_raw"] / max_views * 100)
+        del p["_views_raw"]   # clean up before writing to JSON
 
     return traffic, pages, hub_raw
 
